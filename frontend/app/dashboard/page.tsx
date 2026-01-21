@@ -1,39 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getCurrentUserProfile } from '@/lib/auth';
 
-export default function DashboardPage() {
+export default function DashboardRedirectPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
+    const redirectByRole = async () => {
+      const profile = await getCurrentUserProfile();
 
-      if (!data.session) {
+      if (!profile) {
         router.push('/login');
-      } else {
-        setLoading(false);
+        return;
+      }
+
+      switch (profile.role) {
+        case 'ADMIN':
+          router.push('/dashboard/admin');
+          break;
+        case 'DISTRICT':
+          router.push('/dashboard/district');
+          break;
+        case 'BLOCK':
+          router.push('/dashboard/block');
+          break;
+        case 'LSC':
+          router.push('/dashboard/lsc');
+          break;
+        default:
+          router.push('/login');
       }
     };
 
-    checkSession();
+    redirectByRole();
   }, [router]);
 
-  if (loading) {
-    return <p className="p-6">Loading...</p>;
-  }
-
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">
-        Dashboard (Temporary)
-      </h1>
-      <p className="mt-2 text-gray-600">
-        Authentication successful.
-      </p>
-    </div>
-  );
+  return <p className="p-6">Redirecting...</p>;
 }
