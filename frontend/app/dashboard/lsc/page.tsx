@@ -1,3 +1,4 @@
+//frontend\app\dashboard\lsc\page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -152,6 +153,13 @@ export default function LSCDashboard() {
         >
         + Add Service Entry
         </a>
+        <a
+        href="/dashboard/lsc/services"
+        className="text-blue-600 text-sm underline"
+        >
+        View all service records
+        </a>
+
       </div>
 
       {/* Recent Activity */}

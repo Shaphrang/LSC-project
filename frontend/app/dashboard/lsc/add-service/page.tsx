@@ -26,44 +26,76 @@ export default function AddServiceEntry() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   /* LOAD LSC + SERVICES */
   useEffect(() => {
     const loadInitialData = async () => {
+      setPageLoading(true);
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (!session) return;
+      if (!session) {
+        setPageLoading(false);
+        return;
+      }
 
-      // Get LSC ID
-      const { data: profile } = await supabase
+      // 1. Get LSC ID
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('lsc_id')
         .eq('user_id', session.user.id)
         .single();
 
-      if (!profile?.lsc_id) return;
+      if (profileError || !profile?.lsc_id) {
+        setError('Unable to determine LSC.');
+        setPageLoading(false);
+        return;
+      }
 
       setLscId(profile.lsc_id);
 
-      // Get services offered by this LSC
-      const { data: serviceData } = await supabase
-        .from('lsc_services')
-        .select(`
-          service_items (
-            id,
-            name
-          )
-        `)
-        .eq('lsc_id', profile.lsc_id)
-        .eq('is_available', true);
+      // 2. Get service_item_ids for this LSC
+      const { data: lscServiceRows, error: lscServiceError } =
+        await supabase
+          .from('lsc_services')
+          .select('service_item_id')
+          .eq('lsc_id', profile.lsc_id)
+          .eq('is_available', true);
 
-      const items =
-        serviceData?.map((s: any) => s.service_items[0]) || [];
+      if (lscServiceError) {
+        setError('Failed to load LSC services.');
+        setPageLoading(false);
+        return;
+      }
 
-      setServices(items);
+      const serviceIds =
+        lscServiceRows?.map((r) => r.service_item_id) || [];
+
+      if (serviceIds.length === 0) {
+        setServices([]);
+        setPageLoading(false);
+        return;
+      }
+
+      // 3. Fetch service item details
+      const { data: serviceItems, error: serviceError } =
+        await supabase
+          .from('service_items')
+          .select('id, name')
+          .in('id', serviceIds)
+          .order('name');
+
+      if (serviceError) {
+        setError('Failed to load service list.');
+      } else {
+        setServices(serviceItems || []);
+      }
+
+      setPageLoading(false);
     };
 
     loadInitialData();
@@ -79,14 +111,30 @@ export default function AddServiceEntry() {
   /* SUBMIT FORM */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
     if (!lscId) {
       setError('LSC not found.');
-      setLoading(false);
       return;
     }
+
+    if (
+      !form.service_item_id ||
+      !form.service_start_date ||
+      !form.beneficiary_name ||
+      !form.amount_collected
+    ) {
+      setError('Please fill all required fields.');
+      return;
+    }
+
+    const amount = Number(form.amount_collected);
+    if (isNaN(amount) || amount < 0) {
+      setError('Invalid amount.');
+      return;
+    }
+
+    setLoading(true);
 
     const { error } = await supabase
       .from('service_transactions')
@@ -96,9 +144,9 @@ export default function AddServiceEntry() {
         service_start_date: form.service_start_date,
         service_end_date: form.service_end_date || null,
         beneficiary_name: form.beneficiary_name,
-        beneficiary_address: form.beneficiary_address,
-        beneficiary_phone: form.beneficiary_phone,
-        amount_collected: Number(form.amount_collected),
+        beneficiary_address: form.beneficiary_address || null,
+        beneficiary_phone: form.beneficiary_phone || null,
+        amount_collected: amount,
       });
 
     setLoading(false);
@@ -109,6 +157,10 @@ export default function AddServiceEntry() {
       router.push('/dashboard/lsc');
     }
   };
+
+  if (pageLoading) {
+    return <p className="p-6">Loading form…</p>;
+  }
 
   return (
     <div className="max-w-xl mx-auto p-4 md:p-6">
@@ -143,6 +195,12 @@ export default function AddServiceEntry() {
               </option>
             ))}
           </select>
+
+          {services.length === 0 && (
+            <p className="text-sm text-gray-500 mt-1">
+              No services configured for this LSC.
+            </p>
+          )}
         </div>
 
         {/* Dates */}
