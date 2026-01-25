@@ -1,15 +1,53 @@
+//frontend\app\dashboard\admin\layout.tsx
+'use client';
+
 import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
   return (
-    <div className="min-h-screen flex bg-slate-100 text-slate-900">
-      {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 bg-gradient-to-b from-blue-900 to-blue-800 text-white">
-        <div className="p-5 border-b border-blue-700">
+    /* 🔒 LOCK VIEWPORT */
+    <div className="h-screen overflow-hidden bg-slate-100 text-slate-900 flex">
+
+      {/* ===== MOBILE OVERLAY ===== */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* ===== SIDEBAR (NO SCROLL EVER) ===== */}
+      <aside
+        className={`
+          fixed md:static z-40
+          inset-y-0 left-0
+          w-64
+          bg-gradient-to-b from-blue-900 to-blue-800
+          text-white
+          transform transition-transform duration-200
+          ${open ? 'translate-x-0' : '-translate-x-full'}
+          md:translate-x-0
+          flex flex-col
+          overflow-hidden
+        `}
+      >
+        {/* Header */}
+        <div className="p-5 border-b border-blue-700 shrink-0">
           <h1 className="text-lg font-semibold leading-tight">
             MSRLS – LSC MIS
           </h1>
@@ -18,19 +56,18 @@ export default function AdminLayout({
           </p>
         </div>
 
-        <nav className="p-3 space-y-1 text-sm">
+        {/* Navigation */}
+        <nav className="p-3 space-y-1 text-sm flex-1">
           <NavItem href="/dashboard/admin">Dashboard</NavItem>
 
           <NavSection title="Master Data">
-            <NavItem href="/dashboard/admin/lsc">
-              LSC Management
-            </NavItem>
-            <NavItem href="/dashboard/admin/services">
-              Services
-            </NavItem>
-            <NavItem href="/dashboard/admin/lsc-services">
-              LSC–Service Mapping
-            </NavItem>
+            <NavItem href="/dashboard/admin/lsc">LSC Management</NavItem>
+            <NavItem href="/dashboard/admin/services">Services</NavItem>
+          </NavSection>
+
+          <NavSection title="Finance and Accounting">
+            <NavItem href="/dashboard/admin/lsc">Financial Management</NavItem>
+            <NavItem href="/dashboard/admin/services">Income and Expenditure</NavItem>
           </NavSection>
 
           <NavSection title="Reports">
@@ -39,12 +76,46 @@ export default function AdminLayout({
             </NavItem>
           </NavSection>
         </nav>
+
+        {/* Logout (fixed bottom) */}
+        <div className="p-3 border-t border-blue-700 shrink-0">
+          <button
+            onClick={handleLogout}
+            className="w-full text-left px-3 py-2 rounded hover:bg-blue-700 text-sm"
+          >
+            Logout
+          </button>
+        </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 overflow-y-auto">
-        {children}
-      </main>
+      {/* ===== MAIN AREA ===== */}
+      <div className="flex-1 flex flex-col h-full">
+
+        {/* Mobile Header */}
+        <header className="md:hidden bg-white border-b px-4 py-3 flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => setOpen(true)}
+            className="p-2 rounded hover:bg-slate-100"
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
+
+          <div>
+            <p className="text-sm font-semibold leading-tight">
+              MSRLS – LSC MIS
+            </p>
+            <p className="text-xs text-slate-500">
+              Admin Panel
+            </p>
+          </div>
+        </header>
+
+        {/* ✅ ONLY THIS SCROLLS */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

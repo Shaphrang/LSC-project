@@ -14,6 +14,10 @@ const tabs = [
   'Bank & Infrastructure',
   'Contacts & Geo',
 ];
+type ServiceItem = {
+  id: string;
+  name: string;
+};
 
 export default function EditLSCPage() {
   const { id } = useParams();
@@ -25,6 +29,9 @@ export default function EditLSCPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [allServices, setAllServices] = useState<ServiceItem[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
 
   const [form, setForm] = useState<any>({
     lsc_name: '',
@@ -56,12 +63,28 @@ export default function EditLSCPage() {
       const { data: d } = await supabase.from('districts').select('id,name').order('name');
       setDistricts(d || []);
 
+      const { data: services } = await supabase
+      .from('service_items')
+      .select('id, name')
+      .order('name');
+
+      const { data: lscServices } = await supabase
+      .from('lsc_services')
+      .select('service_item_id')
+      .eq('lsc_id', id);
+
       const { data: lsc, error } = await supabase.from('lscs').select('*').eq('id', id).single();
       if (error || !lsc) {
         setError('LSC not found');
         setLoading(false);
         return;
       }
+
+      setAllServices(services || []);
+      setSelectedServices(
+        (lscServices || []).map(s => s.service_item_id)
+      );
+
 
       setForm({
         ...lsc,
@@ -77,6 +100,8 @@ export default function EditLSCPage() {
 
     loadData();
   }, [id]);
+
+  
 
   /* Load blocks */
   useEffect(() => {
@@ -114,24 +139,37 @@ export default function EditLSCPage() {
       return;
     }
 
+    if (selectedServices.length === 0) {
+      setError('Please select at least one service.');
+      setSaving(false);
+      return;
+    }
+
     if (!/^\d{10,}$/.test(form.contact_details || '')) {
       setError('Contact number must be at least 10 digits.');
       setSaving(false);
       return;
     }
 
-    const { error } = await supabase.from('lscs').update({
-      ...form,
-      staff_count: form.staff_count ? Number(form.staff_count) : null,
-      latitude: form.latitude ? Number(form.latitude) : null,
-      longitude: form.longitude ? Number(form.longitude) : null,
-      date_of_establishment: form.date_of_establishment || null,
-      clf_formation_date: form.clf_formation_date || null,
-    }).eq('id', id);
-
+    const res = await fetch('/api/admin/update-lsc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lsc_id: id,
+        lsc: {
+          ...form,
+          staff_count: form.staff_count ? Number(form.staff_count) : null,
+          latitude: form.latitude ? Number(form.latitude) : null,
+          longitude: form.longitude ? Number(form.longitude) : null,
+          date_of_establishment: form.date_of_establishment || null,
+          clf_formation_date: form.clf_formation_date || null,
+        },
+        services: selectedServices,
+      }),
+    });
+    
     setSaving(false);
-    if (error) setError(error.message);
-    else router.push('/dashboard/admin/lsc');
+    router.push('/dashboard/admin/lsc');
   };
 
   if (loading) {
@@ -177,6 +215,30 @@ export default function EditLSCPage() {
             <Select label="Block *" name="block_id" value={form.block_id} onChange={handleChange} options={blocks} />
             <Input label="Village" name="village" value={form.village || ''} onChange={handleChange} />
             <Input label="GP" name="gp" value={form.gp || ''} onChange={handleChange} />
+            <div className="md:col-span-2">
+            <label className="block text-sm font-medium mb-2">
+              Services Offered *
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 border rounded p-3 max-h-48 overflow-y-auto">
+              {allServices.map(service => (
+                <label key={service.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selectedServices.includes(service.id)}
+                    onChange={() => {
+                      setSelectedServices(prev =>
+                        prev.includes(service.id)
+                          ? prev.filter(id => id !== service.id)
+                          : [...prev, service.id]
+                      );
+                    }}
+                  />
+                  {service.name}
+                </label>
+              ))}
+            </div>
+          </div>
           </>
         )}
 

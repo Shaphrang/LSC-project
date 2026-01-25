@@ -15,7 +15,9 @@ type ServiceItem = {
   id: string;
   name: string;
   category_id: string;
-  service_categories: { name: string }[] | null;
+  service_categories: {
+    name: string;
+  } | null;
 };
 
 
@@ -53,15 +55,18 @@ export default function ServicesPage() {
         `)
         .order('name'),
 
-      supabase
-        .from('service_items')
-        .select(`
-          id,
-          name,
-          category_id,
-          service_categories:service_items_category_id_fkey ( name )
-        `)
-        .order('name'),
+supabase
+  .from('service_items')
+  .select(`
+    id,
+    name,
+    category_id,
+    service_categories:service_categories!service_items_category_id_fkey (
+      name
+    )
+  `)
+  .order('name')
+
     ]);
 
     setCategories(
@@ -72,9 +77,20 @@ export default function ServicesPage() {
       }))
     );
 
-    setServices(svcData || []);
+    const normalizedServices: ServiceItem[] = (svcData || []).map((s: any) => ({
+    id: s.id,
+    name: s.name,
+    category_id: s.category_id,
+    service_categories: Array.isArray(s.service_categories)
+      ? s.service_categories[0] ?? null
+      : s.service_categories ?? null,
+  }));
+
+  setServices(normalizedServices);
+
     setLoading(false);
   };
+  
 
   useEffect(() => {
     loadData();
@@ -339,7 +355,7 @@ export default function ServicesPage() {
                 </td>
 
                 <td className="py-2 text-slate-600">
-                  {s.service_categories?.[0]?.name || '-'}
+                  {s.service_categories?.name || '-'}
                 </td>
 
                 <td className="py-2 text-right space-x-3">

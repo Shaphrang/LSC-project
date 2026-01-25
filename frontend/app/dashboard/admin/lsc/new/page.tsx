@@ -17,6 +17,11 @@ const tabs = [
   'Login Credentials',
 ];
 
+type ServiceItem = {
+  id: string;
+  name: string;
+};
+
 /* ---------- PAGE ---------- */
 export default function AddLSCPage() {
   const router = useRouter();
@@ -28,6 +33,10 @@ export default function AddLSCPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+
 
   /* Auth */
   const [email, setEmail] = useState('');
@@ -76,6 +85,18 @@ export default function AddLSCPage() {
       .then(({ data }) => setBlocks(data || []));
   }, [form.district_id]);
 
+  useEffect(() => {
+    supabase
+      .from('service_items')
+      .select('id, name')
+      .eq('is_active', true)
+      .order('name')
+      .then(({ data }) => {
+        setServices(data || []);
+      });
+  }, []);
+
+
   /* ---------- HANDLERS ---------- */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -94,6 +115,10 @@ export default function AddLSCPage() {
     if (activeTab === 0) {
       if (!form.lsc_name || !form.district_id || !form.block_id) {
         return 'LSC Name, District and Block are mandatory.';
+      }
+
+      if (selectedServices.length === 0) {
+        return 'Select at least one service.';
       }
     }
     if (activeTab === 3) {
@@ -135,6 +160,7 @@ export default function AddLSCPage() {
       body: JSON.stringify({
         email,
         password,
+        services: selectedServices,
         lsc: {
           ...form,
           staff_count: form.staff_count ? Number(form.staff_count) : null,
@@ -198,6 +224,40 @@ export default function AddLSCPage() {
             <Select label="Block *" name="block_id" value={form.block_id} onChange={handleChange} options={blocks} />
             <Input label="Village" name="village" value={form.village} onChange={handleChange} />
             <Input label="GP" name="gp" value={form.gp} onChange={handleChange} />
+            {/* SERVICES (MULTI SELECT) */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-2">
+                Services Offered *
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 border rounded p-3 max-h-48 overflow-y-auto">
+                {services.map((s) => (
+                  <label
+                    key={s.id}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedServices.includes(s.id)}
+                      onChange={(e) => {
+                        setSelectedServices((prev) =>
+                          e.target.checked
+                            ? [...prev, s.id]
+                            : prev.filter((id) => id !== s.id)
+                        );
+                      }}
+                    />
+                    {s.name}
+                  </label>
+                ))}
+
+                {services.length === 0 && (
+                  <p className="text-sm text-slate-500">
+                    No services available.
+                  </p>
+                )}
+              </div>
+            </div>
           </>
         )}
 
