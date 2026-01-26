@@ -1,3 +1,4 @@
+//C:\Users\91700\Documents\LSC-project\frontend\app\dashboard\page.tsx
 'use client';
 
 import { useEffect } from 'react';
