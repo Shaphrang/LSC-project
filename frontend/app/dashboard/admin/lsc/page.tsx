@@ -10,9 +10,10 @@ type LSC = {
   id: string;
   lsc_name: string;
   is_active: boolean;
-  district: { name: string }[] | null;
-  block: { name: string }[] | null;
+  district: { name: string } | null;
+  block: { name: string } | null;
 };
+
 
 export default function LSCListPage() {
   const router = useRouter();
@@ -31,6 +32,7 @@ export default function LSCListPage() {
           block:block_id ( name )
         `)
         .order('lsc_name');
+        console.log('RAW LSC DATA 👉', data);
 
       if (error) {
         console.error('Failed to load LSCs:', error);
@@ -38,7 +40,7 @@ export default function LSCListPage() {
         return;
       }
 
-      setLscs((data as LSC[]) || []);
+setLscs((data as unknown as LSC[]) || []);
       setLoading(false);
     };
 
@@ -101,10 +103,9 @@ export default function LSCListPage() {
 
           <tbody>
             {lscs.map((lsc) => {
-              const districtName =
-                lsc.district?.[0]?.name || '—';
-              const blockName =
-                lsc.block?.[0]?.name || '—';
+const districtName = lsc.district?.name || '—';
+const blockName = lsc.block?.name || '—';
+
 
               return (
                 <tr

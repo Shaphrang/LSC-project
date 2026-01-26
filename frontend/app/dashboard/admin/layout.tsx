@@ -66,8 +66,8 @@ export default function AdminLayout({
           </NavSection>
 
           <NavSection title="Finance and Accounting">
-            <NavItem href="/dashboard/admin/lsc">Financial Management</NavItem>
-            <NavItem href="/dashboard/admin/services">Income and Expenditure</NavItem>
+            <NavItem href="/dashboard/admin/finance">Financial Management</NavItem>
+            <NavItem href="/dashboard/admin/finance">Income and Expenditure</NavItem>
           </NavSection>
 
           <NavSection title="Reports">
