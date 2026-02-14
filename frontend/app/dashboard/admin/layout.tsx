@@ -1,4 +1,4 @@
-//frontend\app\dashboard\admin\layout.tsx
+// frontend\app\dashboard\admin\layout.tsx
 'use client';
 
 import Link from 'next/link';
@@ -31,7 +31,7 @@ export default function AdminLayout({
         />
       )}
 
-      {/* ===== SIDEBAR (NO SCROLL EVER) ===== */}
+      {/* ===== SIDEBAR ===== */}
       <aside
         className={`
           fixed md:static z-40
@@ -57,13 +57,27 @@ export default function AdminLayout({
         </div>
 
         {/* Navigation */}
-        <nav className="p-3 space-y-1 text-sm flex-1">
+        <nav className="p-3 space-y-1 text-sm flex-1 overflow-y-auto">
           <NavItem href="/dashboard/admin">Dashboard</NavItem>
 
-          <NavSection title="Master Data">
-            <NavItem href="/dashboard/admin/lsc">LSC Management</NavItem>
+          {/* <NavSection title="Master Data">
             <NavItem href="/dashboard/admin/services">Services</NavItem>
+          </NavSection> */}
+
+          <NavSection title="LSC Management">
+            <NavItem href="/dashboard/admin/lsc/new">Add New + </NavItem>
+            <NavItem href="/dashboard/admin/lsc/approved">Approved List</NavItem>
+            <NavItem href="/dashboard/admin/lsc/pending">Pending List</NavItem>
+            <NavItem href="/dashboard/admin/lsc/rejected">Rejected List</NavItem>
           </NavSection>
+
+          <NavSection title="SERVICES Management">
+            <NavItem href="/dashboard/admin/services">Services OLD-V</NavItem>
+            <NavItem href="/dashboard/admin/services/categories">Services Categories </NavItem>
+            <NavItem href="/dashboard/admin/services/services"> All Services</NavItem>
+          </NavSection>
+
+
 
           <NavSection title="Finance and Accounting">
             <NavItem href="/dashboard/admin/finance">Financial Management</NavItem>
@@ -81,9 +95,10 @@ export default function AdminLayout({
         <div className="p-3 border-t border-blue-700 shrink-0">
           <button
             onClick={handleLogout}
-            className="w-full text-left px-3 py-2 rounded hover:bg-blue-700 text-sm"
+            className="w-full text-left px-3 py-2 rounded hover:bg-blue-700 text-sm flex items-center justify-between"
           >
             Logout
+            <span className="opacity-50 text-xs">🚪</span>
           </button>
         </div>
       </aside>
@@ -132,7 +147,7 @@ function NavItem({
   return (
     <Link
       href={href}
-      className="block rounded px-3 py-2 hover:bg-blue-700 transition"
+      className="block rounded px-3 py-2 hover:bg-blue-700 transition-colors"
     >
       {children}
     </Link>
@@ -146,12 +161,28 @@ function NavSection({
   title: string;
   children: React.ReactNode;
 }) {
+  const [isOpen, setIsOpen] = useState(false); // Default close
+
   return (
     <div className="mt-4">
-      <p className="px-3 mb-1 text-xs uppercase tracking-wide text-blue-300">
-        {title}
-      </p>
-      <div className="space-y-1">{children}</div>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-3 mb-1 text-xs uppercase tracking-wide text-blue-300 hover:text-white transition-colors group"
+      >
+        <span>{title}</span>
+        <span className={`transition-transform duration-200 text-[10px] ${isOpen ? 'rotate-180' : 'rotate-0'}`}>
+          ▼
+        </span>
+      </button>
+      
+      {/* Container with slide animation */}
+      <div 
+        className={`space-y-1 transition-all duration-300 ease-in-out overflow-hidden ${
+          isOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        {children}
+      </div>
     </div>
   );
 }

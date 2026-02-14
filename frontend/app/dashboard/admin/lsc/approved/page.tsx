@@ -31,6 +31,7 @@ export default function LSCListPage() {
           district:district_id ( name ),
           block:block_id ( name )
         `)
+        .eq('status', 'APPROVED')
         .order('lsc_name');
         console.log('RAW LSC DATA 👉', data);
 
@@ -67,24 +68,6 @@ setLscs((data as unknown as LSC[]) || []);
             Livelihood Service Centres master list
           </p>
         </div>
-
-        {/* <button
-          onClick={() =>
-            router.push('/dashboard/admin/lsc/new')
-          }
-          className="bg-blue-700 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-800"
-        >
-          Newly Request
-        </button> */}
-
-        <button
-          onClick={() =>
-            router.push('/dashboard/admin/lsc/new')
-          }
-          className="bg-blue-700 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-800"
-        >
-          + Add LSC
-        </button>
       </div>
 
       {/* Table */}
@@ -152,7 +135,7 @@ const blockName = lsc.block?.name || '—';
                           `/dashboard/admin/lsc/${lsc.id}`
                         )
                       }
-                      className="text-blue-700 hover:underline text-sm"
+                      className="px-4 py-2 text-blue-700 font-bold rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-200 text-xs shadow-sm active:scale-95"
                     >
                       View / Edit
                     </button>

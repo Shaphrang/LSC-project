@@ -28,7 +28,7 @@ export default function AddLSCPage() {
   const [activeTab, setActiveTab] = useState(0);
 
   const [districts, setDistricts] = useState<District[]>([]);
-  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);  
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

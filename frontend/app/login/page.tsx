@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -57,6 +58,19 @@ export default function LoginPage() {
           <p className="text-sm text-slate-500">
             Government of Meghalaya
           </p>
+
+
+          <Link
+            href="/public/lscregistration"
+            className="text-blue-600 hover:text-blue-800 font-medium transition-colors underline">
+            New Application
+          </Link>
+
+          <Link
+            href="/public/registrationstatus"
+            className="text-blue-600 hover:text-blue-800 font-medium underline transition-colors p-2">
+            Track My Applocation
+          </Link>
         </div>
       </div>
 
